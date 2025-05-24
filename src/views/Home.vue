@@ -42,8 +42,6 @@
 </template>
 
 <script setup>
-import { VuePlotly } from 'vue3-plotly';
-// No se requiere lógica adicional para esta vista
 </script>
 
 <style scoped>

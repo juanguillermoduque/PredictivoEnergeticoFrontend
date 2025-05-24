@@ -1,13 +1,12 @@
 <script setup>
-import { VuePlotly } from 'vue3-plotly';
-// No se requiere lógica adicional para este componente
+
 </script>
 
 <template>
   <div class="app">
     <nav class="main-nav">
       <router-link to="/" class="nav-logo">
-        <img src="@/assets/logo.svg" alt="Logo" class="logo-img">
+        <img src="https://www.xm.com.co/sites/default/files/styles/large/public/2021-03/XM.png?itok=6YwOD3Be" alt="Logo" class="logo-img">
         <span class="logo-text">XM Analytics</span>
       </router-link>
       
@@ -24,7 +23,7 @@ import { VuePlotly } from 'vue3-plotly';
     </main>
     
     <footer class="footer">
-      <p>&copy; 2024 XM Analytics. Todos los derechos reservados.</p>
+      <p>&copy; 2025ß XM Analytics. Todos los derechos reservados.</p>
     </footer>
   </div>
 </template>

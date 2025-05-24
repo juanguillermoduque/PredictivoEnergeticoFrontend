@@ -29,7 +29,6 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { VuePlotly } from 'vue3-plotly'
 import { xmService } from '@/services/api'
 
 const selectedChart = ref('daily')

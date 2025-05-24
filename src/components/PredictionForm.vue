@@ -1,5 +1,6 @@
 <template>
   <div class="prediction-container">
+    <!-- <p>Se realizara la predicción de consumo energetico de en el rango de fecha seleccionado</p> -->
     <form @submit.prevent="submitPrediction" class="prediction-form">
       <div class="form-group">
         <label>Fecha de inicio:</label>
@@ -21,37 +22,6 @@
         />
       </div>
       
-      <div class="form-group">
-        <label>Variable a predecir:</label>
-        <select v-model="targetColumn" required class="form-input">
-          <option value="demanda_real">Demanda Real</option>
-          <option value="generacion_total">Generación Total</option>
-          <option value="precio_bolsa">Precio Bolsa</option>
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label>Modelo:</label>
-        <select v-model="modelType" required class="form-input">
-          <option value="random_forest">Random Forest</option>
-          <option value="gradient_boosting">Gradient Boosting</option>
-          <option value="linear_regression">Regresión Lineal</option>
-          <option value="svr">SVR</option>
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label>Horas a predecir:</label>
-        <input 
-          type="number" 
-          v-model="stepsAhead" 
-          min="1" 
-          max="168" 
-          required 
-          class="form-input"
-        />
-      </div>
-      
       <button type="submit" class="submit-button" :disabled="loading">
         {{ loading ? 'Generando predicción...' : 'Generar Predicción' }}
       </button>
@@ -61,27 +31,8 @@
       {{ error }}
     </div>
     
-    <div v-if="result" class="result-container">
-      <h3>Resultados de la predicción</h3>
-      
-      <div class="metrics">
-        <div class="metric">
-          <span class="metric-label">MSE:</span>
-          <span class="metric-value">{{ result.metrics.mse.toFixed(4) }}</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">R²:</span>
-          <span class="metric-value">{{ result.metrics.r2.toFixed(4) }}</span>
-        </div>
-      </div>
-      
-      <div class="plot-container" v-if="plotData">
-        <vue-plotly 
-          :data="plotData.data" 
-          :layout="plotData.layout"
-          :config="{ responsive: true }"
-        />
-      </div>
+    <div class="plot-container" v-if="base_64">
+      <img :src="'data:image/png;base64,' + base_64" alt="predición generada" />
     </div>
   </div>
 </template>
@@ -89,35 +40,28 @@
 <script setup>
 import { ref } from 'vue';
 import { predictionService } from '../services/api';
-import { VuePlotly } from 'vue3-plotly';
 
 const startDate = ref('');
 const endDate = ref('');
-const targetColumn = ref('demanda_real');
-const modelType = ref('random_forest');
-const stepsAhead = ref(24);
 const loading = ref(false);
 const error = ref(null);
-const result = ref(null);
-const plotData = ref(null);
+const base_64 = ref(null);
 
 const submitPrediction = async () => {
   loading.value = true;
   error.value = null;
-  result.value = null;
-  plotData.value = null;
+  base_64.value = null;
   
   try {
     const response = await predictionService.predict({
       start_date: startDate.value,
       end_date: endDate.value,
-      target_column: targetColumn.value,
-      model_type: modelType.value,
-      steps_ahead: stepsAhead.value
     });
     
-    result.value = response.data;
-    plotData.value = JSON.parse(response.data.plot_data);
+    if(response?.data?.base_64){
+      base_64.value = response?.data?.base_64;
+    }
+    loading.value = false;
   } catch (err) {
     error.value = 'Error al generar la predicción: ' + (err.response?.data?.error || err.message);
   } finally {

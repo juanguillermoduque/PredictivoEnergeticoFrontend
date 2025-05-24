@@ -17,30 +17,33 @@
       </div>
       <div class="visualization-type">
         <select v-model="visualizationType" @change="updateVisualization" class="select-input">
-          <option value="time_series">Serie Temporal</option>
-          <option value="correlation">Correlación</option>
+          <option value="outler">Demanda Real</option>
+          <option value="coolwarm">Matriz de correlación entre horas</option>
+          <option value="demanda_real_vs_z_score">Demanda real Vs Z Score</option>
           <option value="box_plot">Gráfico de Caja</option>
           <option value="histogram">Histograma</option>
-        </select>
-        <select 
-          v-if="visualizationType === 'box_plot' || visualizationType === 'histogram'"
-          v-model="selectedColumn" 
-          @change="updateVisualization"
-          class="select-input"
-        >
-          <option value="demanda_real">Demanda Real</option>
-          <option value="generacion_total">Generación Total</option>
-          <option value="precio_bolsa">Precio Bolsa</option>
+          <option value="warm_map">Mapa de Calor</option>
+          <option value="acumilativo_demanda_horaria">Acumulativo Demanda Horaria</option>
+          <option value="line_demanda_promedio">Demanda Promedio</option>
+          <option value="barras_demanda_promedio_hora">Barras Demanda Promedio por Hora</option>
+          <option value="barras_demanda_promedio_mes">Barras Demanda Promedio por Mes</option>
+          <option value="barras_demanda_promedio_dia">Barras Demanda Promedio por Día</option>
+          <option value="barras_demanda_promedio_anio">Barras Demanda Promedio por Año</option>
+          <option value="barras_acumulado_promedio_anio_mes">Barras Acumulado Promedio por Año y Mes</option>
+          <option value="dispersion_horaria">Dispersión Horaria</option>
+          <option value="historico_minimo_maximo">Histórico Mínimo y Máximo</option>
         </select>
       </div>
     </div>
     
-    <div class="plot-container" v-if="plotData">
-      <vue-plotly 
-        :data="plotData.data" 
-        :layout="plotData.layout"
-        :config="{ responsive: true }"
-      />
+    <div class="plot-container" v-if="base_64">
+      <img :src="'data:image/png;base64,' + base_64" alt="Visualización generada" />
+    </div>
+
+    <div v-if="isLoading" >
+      <div class="loading-spinner">
+        <span class="spinner"></span> Cargando visualización...
+      </div>
     </div>
     
     <div v-if="error" class="error-message">
@@ -52,16 +55,17 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { xmService } from '../services/api';
-import { VuePlotly } from 'vue3-plotly';
 
 const startDate = ref('');
 const endDate = ref('');
-const visualizationType = ref('time_series');
-const selectedColumn = ref('demanda_real');
-const plotData = ref(null);
+const visualizationType = ref('coolwarm');
 const error = ref(null);
+const base_64 = ref(null);
+const isLoading = ref(false);
 
 const updateVisualization = async () => {
+  isLoading.value = true;
+  base_64.value = null;
   if (!startDate.value || !endDate.value) return;
   
   try {
@@ -72,14 +76,15 @@ const updateVisualization = async () => {
       type: visualizationType.value
     };
     
-    if (visualizationType.value === 'box_plot' || visualizationType.value === 'histogram') {
-      params.column = selectedColumn.value;
-    }
-    
     const response = await xmService.fetchVisualizations(params);
-    plotData.value = JSON.parse(response.data.plot_data);
+
+    if(response?.data?.base_64){
+      base_64.value = response?.data?.base_64;
+    }
+    isLoading.value = false;
   } catch (err) {
     error.value = 'Error al cargar la visualización: ' + (err.response?.data?.error || err.message);
+    isLoading.value = false;
   }
 };
 
@@ -127,7 +132,6 @@ onMounted(() => {
   height: 600px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  overflow: hidden;
 }
 
 .error-message {
@@ -138,4 +142,28 @@ onMounted(() => {
   border-radius: 4px;
   background-color: #f8d7da;
 }
+
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  color: #333;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #ccc;
+  border-top: 3px solid #333;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 </style> 
